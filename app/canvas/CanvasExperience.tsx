@@ -746,7 +746,7 @@ export function CanvasExperience() {
       target instanceof Element &&
       Boolean(
         target.closest(
-          "a, button, input, textarea, select, [contenteditable='true'], .canvas-hud",
+          "a, button, input, textarea, select, [contenteditable='true'], .markdown-node, .canvas-hud",
         ),
       );
 
