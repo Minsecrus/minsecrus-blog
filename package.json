@@ -1,0 +1,51 @@
+{
+  "name": "minsecrus-blog",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://minsecrus.github.io/minsecrus-blog/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Minsecrus/minsecrus-blog.git"
+  },
+  "packageManager": "pnpm@11.9.0",
+  "type": "module",
+  "scripts": {
+    "build": "react-router build",
+    "check": "pnpm typecheck && pnpm test && pnpm build",
+    "dev": "react-router dev",
+    "pages:prepare": "node tools/prepare-pages.mjs",
+    "preview": "sirv build/client --single __spa-fallback.html",
+    "test": "vitest run --config vitest.config.ts",
+    "typecheck": "react-router typegen && tsc"
+  },
+  "dependencies": {
+    "@fontsource-variable/mona-sans": "5.2.8",
+    "@fontsource/monaspace-neon": "5.2.5",
+    "@lobehub/webfont-harmony-sans-sc": "1.0.0",
+    "gray-matter": "^4.0.3",
+    "isbot": "^5",
+    "mdast-util-to-string": "^4.0.0",
+    "motion": "^12.42.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router": "8.2.0",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.1.0"
+  },
+  "devDependencies": {
+    "@react-router/dev": "8.2.0",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^22",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "sirv-cli": "^3.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.3",
+    "vitest": "^4.1.10"
+  }
+}
