@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CurrentNodeIcon, FitIcon, MinusIcon, PlusIcon } from "./Icons";
 
-const PRESET_SCALES = [0.5, 0.75, 1, 1.25, 1.5];
+const PRESET_SCALES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75];
 
 interface CanvasHudProps {
   onCurrent: () => void;

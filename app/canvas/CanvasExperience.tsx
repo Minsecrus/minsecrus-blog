@@ -13,13 +13,19 @@ import { CanvasHud } from "./CanvasHud";
 import { CanvasInfo } from "./CanvasInfo";
 import { EdgeLayer } from "./EdgeLayer";
 import {
+  CAMERA_SCALE_STEP,
   HORIZONTAL_GAP,
+  MAX_CAMERA_SCALE,
+  MIN_CAMERA_SCALE,
   VERTICAL_GAP,
   boundsForRects,
+  cameraFromWheelGesture,
   edgePath,
   fitBounds,
+  nextScaleStep,
   nodeLeftForPlacement,
   panWorldPointToViewport,
+  snapCameraToPixelGrid,
 } from "./geometry";
 import { MarkdownNode } from "./MarkdownNode";
 import { layoutVisibleTree } from "./treeLayout";
@@ -36,8 +42,8 @@ import type {
 const DESKTOP_NODE_WIDTH = 620;
 const ESTIMATED_NODE_HEIGHT = 330;
 const CAMERA_DURATION = 560;
-const MIN_SCALE = 0.28;
-const MAX_SCALE = 1.8;
+const MIN_SCALE = MIN_CAMERA_SCALE;
+const MAX_SCALE = MAX_CAMERA_SCALE;
 
 interface InstanceFocusOptions {
   duration?: number;
@@ -220,7 +226,10 @@ export function CanvasExperience() {
   }, []);
 
   const commitCamera = useCallback((camera: CameraTransform) => {
-    const next = { ...camera, k: clampScale(camera.k) };
+    const next = snapCameraToPixelGrid(
+      { ...camera, k: clampScale(camera.k) },
+      window.devicePixelRatio,
+    );
     cameraRef.current = next;
     setCameraScale(next.k);
     if (worldRef.current) {
@@ -657,9 +666,9 @@ export function CanvasExperience() {
   }, [focusContentId, panToInstanceTitle]);
 
   const zoomBy = useCallback(
-    (factor: number) => {
+    (direction: -1 | 1) => {
       const current = cameraRef.current;
-      const nextK = clampScale(current.k * factor);
+      const nextK = nextScaleStep(current.k, direction);
       const centerX = viewportSize.width / 2;
       const centerY = viewportSize.height / 2;
       const ratio = nextK / current.k;
@@ -821,20 +830,24 @@ export function CanvasExperience() {
       event.preventDefault();
       stopCameraAnimation();
       const rect = viewport.getBoundingClientRect();
-      const point = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      };
-      const modeMultiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? viewport.clientHeight : 1;
-      const delta = Math.max(-240, Math.min(240, event.deltaY * modeMultiplier));
-      const current = cameraRef.current;
-      const nextK = clampScale(current.k * Math.exp(-delta * 0.0018));
-      const ratio = nextK / current.k;
-      commitCamera({
-        k: nextK,
-        x: point.x - (point.x - current.x) * ratio,
-        y: point.y - (point.y - current.y) * ratio,
-      });
+      commitCamera(
+        cameraFromWheelGesture({
+          ctrlKey: event.ctrlKey,
+          current: cameraRef.current,
+          deltaMode: event.deltaMode,
+          deltaX: event.deltaX,
+          deltaY: event.deltaY,
+          maxScale: MAX_SCALE,
+          minScale: MIN_SCALE,
+          pointer: {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+          },
+          scaleStep: CAMERA_SCALE_STEP,
+          shiftKey: event.shiftKey,
+          viewportHeight: viewport.clientHeight,
+        }),
+      );
     };
 
     const handleDoubleClick = (event: MouseEvent) => {
@@ -1007,15 +1020,22 @@ export function CanvasExperience() {
         </div>
       </div>
 
-      <button
-        aria-label="回到主 Markdown"
-        className="canvas-home-island"
-        onClick={returnHome}
-        type="button"
-      >
-        {"Minsecrus' "}
-        <span className="canvas-home-island__blog">Blog</span>
-      </button>
+      <nav aria-label="站点导航" className="canvas-home-island">
+        <a
+          className="canvas-home-island__author"
+          href="https://minsecrus.github.io/"
+        >
+          Minsecrus&apos;
+        </a>
+        <button
+          aria-label="回到主 Markdown"
+          className="canvas-home-island__blog"
+          onClick={returnHome}
+          type="button"
+        >
+          Blog
+        </button>
+      </nav>
 
       <CanvasDirectory
         currentNodeId={focusContentId}
@@ -1027,8 +1047,8 @@ export function CanvasExperience() {
         onCurrent={returnToCurrentNode}
         onFit={() => fitScene()}
         onZoomPreset={zoomTo}
-        onZoomIn={() => zoomBy(1.22)}
-        onZoomOut={() => zoomBy(0.82)}
+        onZoomIn={() => zoomBy(1)}
+        onZoomOut={() => zoomBy(-1)}
         scale={cameraScale}
       />
       <p aria-live="polite" className="sr-only">

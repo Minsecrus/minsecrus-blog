@@ -59,7 +59,10 @@ export function CanvasInfo() {
           <span>Blog</span>
         </h2>
         <p>一个以 Markdown 为内容、以认知关系组织的画布式博客。</p>
-        <p>拖拽移动画布，滚轮缩放，点击正文标记展开或收起内容。</p>
+        <p>
+          拖拽移动画布；滚轮上下移动，Shift + 滚轮左右移动，Ctrl +
+          滚轮以指针为中心按 25% 步进缩放。点击正文标记展开或收起内容。
+        </p>
         <a
           className="canvas-info-dialog__github"
           href="https://github.com/Minsecrus/minsecrus-blog"

@@ -8,6 +8,9 @@ import type {
 
 export const HORIZONTAL_GAP = 168;
 export const VERTICAL_GAP = 56;
+export const MIN_CAMERA_SCALE = 0.25;
+export const MAX_CAMERA_SCALE = 1.75;
+export const CAMERA_SCALE_STEP = 0.25;
 
 interface NodePlacementInput {
   horizontalMargin: number;
@@ -15,6 +18,103 @@ interface NodePlacementInput {
   placement: "center" | "right";
   scale: number;
   viewportWidth: number;
+}
+
+interface WheelCameraGestureInput {
+  ctrlKey: boolean;
+  current: CameraTransform;
+  deltaMode: number;
+  deltaX: number;
+  deltaY: number;
+  maxScale: number;
+  minScale: number;
+  pointer: Point;
+  scaleStep: number;
+  shiftKey: boolean;
+  viewportHeight: number;
+}
+
+export function nextScaleStep(
+  current: number,
+  direction: -1 | 1,
+  minScale = MIN_CAMERA_SCALE,
+  maxScale = MAX_CAMERA_SCALE,
+  step = CAMERA_SCALE_STEP,
+): number {
+  const epsilon = 0.000001;
+  const next =
+    direction > 0
+      ? (Math.floor((current + epsilon) / step) + 1) * step
+      : (Math.ceil((current - epsilon) / step) - 1) * step;
+
+  return Math.max(minScale, Math.min(maxScale, next));
+}
+
+export function snapCameraToPixelGrid(
+  camera: CameraTransform,
+  devicePixelRatio = 1,
+): CameraTransform {
+  const ratio =
+    Number.isFinite(devicePixelRatio) && devicePixelRatio > 0
+      ? devicePixelRatio
+      : 1;
+  const snap = (value: number) => Math.round(value * ratio) / ratio;
+
+  return {
+    ...camera,
+    x: snap(camera.x),
+    y: snap(camera.y),
+  };
+}
+
+export function cameraFromWheelGesture({
+  ctrlKey,
+  current,
+  deltaMode,
+  deltaX,
+  deltaY,
+  maxScale,
+  minScale,
+  pointer,
+  scaleStep,
+  shiftKey,
+  viewportHeight,
+}: WheelCameraGestureInput): CameraTransform {
+  const modeMultiplier =
+    deltaMode === 1 ? 16 : deltaMode === 2 ? viewportHeight : 1;
+  const horizontalDelta = deltaX * modeMultiplier;
+  const verticalDelta = deltaY * modeMultiplier;
+
+  if (!ctrlKey) {
+    if (shiftKey) {
+      const scrollDelta = verticalDelta || horizontalDelta;
+      return { ...current, x: current.x - scrollDelta };
+    }
+
+    return { ...current, y: current.y - verticalDelta };
+  }
+
+  const zoomDelta = Math.max(
+    -240,
+    Math.min(240, verticalDelta || horizontalDelta),
+  );
+  const nextK =
+    zoomDelta === 0
+      ? current.k
+      : nextScaleStep(
+          current.k,
+          zoomDelta < 0 ? 1 : -1,
+          minScale,
+          maxScale,
+          scaleStep,
+        );
+  const ratio = nextK / current.k;
+
+  return {
+    k: nextK,
+    x: pointer.x - (pointer.x - current.x) * ratio,
+    y: pointer.y - (pointer.y - current.y) * ratio,
+  };
 }
 
 export function nodeLeftForPlacement({
@@ -71,7 +171,7 @@ export function fitBounds(
   const availableWidth = Math.max(1, viewport.width - padding * 2);
   const availableHeight = Math.max(1, viewport.height - padding * 2);
   const k = Math.max(
-    0.28,
+    MIN_CAMERA_SCALE,
     Math.min(
       maxScale,
       availableWidth / Math.max(bounds.width, 1),

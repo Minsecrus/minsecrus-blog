@@ -159,7 +159,6 @@ a {
   top: 0;
   transform-origin: 0 0;
   width: 0;
-  will-change: transform;
 }
 
 .canvas-edges {
@@ -194,7 +193,6 @@ a {
   position: absolute;
   top: 0;
   transform-origin: 50% 50%;
-  will-change: transform, opacity;
   z-index: 2;
 }
 
@@ -373,13 +371,14 @@ a {
 }
 
 .canvas-home-island {
+  align-items: baseline;
   background: #fff;
-  border: 0;
   color: var(--ink);
-  cursor: pointer;
+  display: flex;
   font-family: var(--font-ui);
   font-size: 16px;
   font-weight: 400;
+  gap: 0.25em;
   left: max(20px, env(safe-area-inset-left));
   letter-spacing: -0.025em;
   line-height: 1;
@@ -392,18 +391,47 @@ a {
   z-index: 20;
 }
 
+.canvas-home-island__author,
+.canvas-home-island__blog {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  padding: 0;
+  text-decoration: none;
+}
+
+.canvas-home-island__author {
+  color: var(--ink);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .canvas-home-island__blog {
   color: var(--accent);
   font-weight: 500;
+  transform-origin: center;
 }
 
-.canvas-home-island:hover {
-  transform: translateX(2px);
+.canvas-home-island__author:hover {
+  transform: translateX(-4px);
 }
 
-.canvas-home-island:focus-visible {
+.canvas-home-island__blog:hover {
+  animation: canvas-home-blog-spin 420ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.canvas-home-island__author:focus-visible,
+.canvas-home-island__blog:focus-visible {
   outline: 1px solid var(--accent);
   outline-offset: 3px;
+}
+
+@keyframes canvas-home-blog-spin {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 .canvas-island-button {
@@ -866,5 +894,13 @@ a {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .canvas-home-island__author:hover {
+    transform: none;
+  }
+
+  .canvas-home-island__blog:hover {
+    animation: none;
   }
 }
